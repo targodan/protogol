@@ -9,7 +9,7 @@ type Handler interface {
 }
 
 func NewChain() *Chain {
-    return Chain {
+    return &Chain {
         first: nil,
         last: nil
     }
@@ -58,7 +58,7 @@ type link struct {
 }
 
 func newLink(h Handler) *link {
-    return link {
+    return &link {
         handler: h,
         next: nil
     }

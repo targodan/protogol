@@ -1,11 +1,11 @@
 package protoframe
 
 import (
-    "fmt"
+    "net"
 )
 
 type State interface {
-    NextState(data interface{}) (State, error)
+    NextState(data interface{}, conn net.Conn) (State, error)
 }
 
 func NewStateMachine(initial State) *StateMachine {
@@ -20,7 +20,7 @@ type StateMachine {
     currnet State
 }
 
-func (this *StateMachine) Handle(data interface{}) (err error) {
-    this.current, err = this.initial.NextState(data)
+func (this *StateMachine) Handle(data interface{}, conn net.Conn) (err error) {
+    this.current, err = this.initial.NextState(data, conn)
     return
 }
