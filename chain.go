@@ -20,25 +20,25 @@ type Chain struct {
     last *link
 }
 
-func (this *Chain) AddHandler(h Handler) {
+func (c *Chain) AddHandler(h Handler) {
     l := newLink(h);
-    if this.first == nil {
-        this.first = l
-    } else if this.last == nil {
-        this.first.next = l
-        this.last = l
+    if c.first == nil {
+        c.first = l
+        c.last = l
     } else {
-        this.last.next = l
-        this.last = l
+        c.last.next = l
+        c.last = l
     }
+    // wrap it around
+    c.last.next = c.first
 }
 
-func (this Chain) Handle(interface{} data) (data interface{}, err error) {
-    if this.first == nil {
+func (c Chain) Handle(interface{} data, chan<- out) (err error) {
+    if c.first == nil {
         err := errors.New("Chain is empty. Please add Hanlders first.")
         return
     }
-    link := this.first
+    link := c.first
     for {
         data, err = link.handler.Handle(data)
         if err != nil {
@@ -46,7 +46,7 @@ func (this Chain) Handle(interface{} data) (data interface{}, err error) {
         }
         link = link.next
         if link == nil {
-            break
+            out <- data
         }
     }
     return

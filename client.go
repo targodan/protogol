@@ -5,7 +5,7 @@ import (
 )
 
 type Client struct {
-    machine StateMachine*
+    machine *StateMachine
 }
 
 func (c Client) Start(baseProto string, addr string) (err error) {

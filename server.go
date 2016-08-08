@@ -5,8 +5,16 @@ import (
     "bufio"
 )
 
+func NewServer(chain Chain, machine *StateMachine) Server {
+    return Server{
+        chain: chain,
+        machine: machine
+    }
+}
+
 type Server struct {
-    machine StateMachine*
+    chain Chain
+    machine *StateMachine
 }
 
 func (s Server) Start(baseProto string, addr string) (err error) {
@@ -30,7 +38,10 @@ func (s Server) handleConnection(conn net.Conn) {
 
     buffer := bufio.NewReader(conn)
     io := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+    data := make(chan interface{})
+    go s.chain.Handle(io, data)
+
     for {
-        // maybe give the reader to the StateMachine and the Chain resp.
+        machine.Handle(conn, <-data)
     }
 }
