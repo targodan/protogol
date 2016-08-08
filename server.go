@@ -1,6 +1,9 @@
 package protoframe
 
-import "net"
+import (
+	"fmt"
+	"net"
+)
 
 func NewServer(readerChain ReaderChain, writerChain WriterChain, machine *StateMachine) Server {
 	return Server{
@@ -19,11 +22,15 @@ type Server struct {
 func (s Server) Start(baseProto string, addr string, errHandler ErrorHandler) {
 	ln, err := net.Listen(baseProto, addr)
 	if err != nil {
-		return
+		if errHandler(err) {
+			return
+		}
 	}
 
 	for {
+		fmt.Println("pls accept")
 		conn, err := ln.Accept()
+		fmt.Println("accepted")
 		if err != nil {
 			if errHandler(err) {
 				return

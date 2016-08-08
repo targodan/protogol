@@ -17,7 +17,10 @@ type packageReader struct{}
 func (p packageReader) Handle(data interface{}) (interface{}, error) {
 	reader := data.(*bufio.Reader)
 	var len uint32
-	binary.Read(reader, binary.LittleEndian, &len)
+	err := binary.Read(reader, binary.LittleEndian, &len)
+	if err != nil {
+		return nil, err
+	}
 
 	stringbuf := new(bytes.Buffer)
 	var read uint32
@@ -38,11 +41,15 @@ func (p packageWriter) Handle(data interface{}) (interface{}, error) {
 
 	buf := new(bytes.Buffer)
 
-	len := utf8.RuneCountInString(msg)
-	binary.Write(buf, binary.LittleEndian, len)
+	len := uint32(utf8.RuneCountInString(msg))
+	err := binary.Write(buf, binary.LittleEndian, len)
+	if err != nil {
+		return nil, err
+	}
 
-	for i := 0; i < len; i++ {
-		r, _ := utf8.DecodeRuneInString(msg)
+	for i := uint32(0); i < len; i++ {
+		r, size := utf8.DecodeRuneInString(msg)
+		msg = msg[size:]
 		buf.WriteRune(r)
 	}
 

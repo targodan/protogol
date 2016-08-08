@@ -98,6 +98,7 @@ func (c WriterChain) SendPackage(data Package) (nn int, err error) {
 		}
 	}
 	nn, err = c.writer.Write(data.([]byte))
+	c.writer.Flush()
 	return
 }
 
