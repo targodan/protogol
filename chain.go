@@ -2,6 +2,8 @@ package protoframe
 
 import (
     "errors"
+    "bufio"
+    "net"
 )
 
 type Handler interface {
@@ -11,7 +13,10 @@ type Handler interface {
 func NewChain() *Chain {
     return &Chain {
         first: nil,
-        last: nil
+        last: nil,
+        reader: nil,
+        writer: nil,
+        conn: nil
     }
 }
 
@@ -29,16 +34,39 @@ func (c *Chain) AddHandler(h Handler) {
         c.last.next = l
         c.last = l
     }
-    // wrap it around
-    c.last.next = c.first
 }
 
-func (c Chain) Handle(interface{} data, chan<- out) (err error) {
-    if c.first == nil {
+func (c *Chain) GetReaderChain(conn net.Conn) *ReaderChain {
+    return &ReaderChain{
+        chain: c,
+        reader: bufio.NewReader(conn)
+    }
+}
+
+func (c *Chain) GetWriterChain(onn net.Conn) *ReaderChain {
+    return &WriterChain{
+        chain: c,
+        writer: bufio.NewWriter(conn)
+    }
+}
+
+type ReaderChain struct {
+    chain *Chain
+    reader *bufio.Reader
+}
+
+type WriterChain struct {
+    chain *Chain
+    reader *bufio.Writer
+}
+
+func (c ReaderChain) RecvPackage() (data Package, err error) {
+    if c.chain.first == nil {
         err := errors.New("Chain is empty. Please add Hanlders first.")
         return
     }
-    link := c.first
+    link := c.chain.first
+    data := c.reader
     for {
         data, err = link.handler.Handle(data)
         if err != nil {
@@ -46,9 +74,31 @@ func (c Chain) Handle(interface{} data, chan<- out) (err error) {
         }
         link = link.next
         if link == nil {
-            out <- data
+            break
         }
     }
+    return
+}
+
+func (c WriterChain) SendPackage(data Package) (nn int, err error) {
+    nn, err := 0, nil
+    if c.chain.first == nil {
+        err := errors.New("Chain is empty. Please add Hanlders first.")
+        return
+    }
+    link := c.chain.first
+    data := data
+    for {
+        data, err = link.handler.Handle(data)
+        if err != nil {
+            return
+        }
+        link = link.next
+        if link == nil {
+            break
+        }
+    }
+    nn, err = c.writer.Write(data.([]byte))
     return
 }
 

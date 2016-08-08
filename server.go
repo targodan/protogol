@@ -17,7 +17,7 @@ type Server struct {
     machine *StateMachine
 }
 
-func (s Server) Start(baseProto string, addr string) (err error) {
+func (s Server) Start(baseProto string, addr string, errHandler ErrorHandler) (err error) {
     ln, err := net.Listen(baseProto, addr)
     if err != nil {
         return
@@ -28,20 +28,22 @@ func (s Server) Start(baseProto string, addr string) (err error) {
         if err != nil {
             return
         }
-    	go s.handleConnection(conn)
+    	go s.handleConnection(conn, errHandler)
     }
 }
 
-func (s Server) handleConnection(conn net.Conn) {
-    m := *s.machine
-    machine := &m
+func (s Server) handleConnection(conn net.Conn, errHandler ErrorHandler) {
+    machine := CloneStateMachine(*s.machine)
 
-    buffer := bufio.NewReader(conn)
-    io := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
-    data := make(chan interface{})
-    go s.chain.Handle(io, data)
+    reader := s.chain.GetReaderChain(conn)
+    writer := s.chain.GetWriterChain(conn)
 
-    for {
-        machine.Handle(conn, <-data)
+    done := false
+    for !done {
+        done, err = machine.Handle(reader, writer)
+        if err != nil {
+            done = errHandler(err)
+        }
     }
+    conn.Close()
 }
