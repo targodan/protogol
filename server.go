@@ -1,23 +1,22 @@
 package protoframe
 
-import (
-	"bufio"
-	"net"
-)
+import "net"
 
-func NewServer(chain Chain, machine *StateMachine) Server {
+func NewServer(readerChain ReaderChain, writerChain WriterChain, machine *StateMachine) Server {
 	return Server{
-		chain:   chain,
-		machine: machine,
+		readerChain: readerChain,
+		writerChain: writerChain,
+		machine:     machine,
 	}
 }
 
 type Server struct {
-	chain   Chain
-	machine *StateMachine
+	readerChain ReaderChain
+	writerChain WriterChain
+	machine     *StateMachine
 }
 
-func (s Server) Start(baseProto string, addr string, errHandler ErrorHandler) (err error) {
+func (s Server) Start(baseProto string, addr string, errHandler ErrorHandler) {
 	ln, err := net.Listen(baseProto, addr)
 	if err != nil {
 		return
@@ -26,7 +25,9 @@ func (s Server) Start(baseProto string, addr string, errHandler ErrorHandler) (e
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			return
+			if errHandler(err) {
+				return
+			}
 		}
 		go s.handleConnection(conn, errHandler)
 	}
@@ -35,10 +36,11 @@ func (s Server) Start(baseProto string, addr string, errHandler ErrorHandler) (e
 func (s Server) handleConnection(conn net.Conn, errHandler ErrorHandler) {
 	machine := CloneStateMachine(*s.machine)
 
-	reader := s.chain.GetReaderChain(conn)
-	writer := s.chain.GetWriterChain(conn)
+	reader := s.readerChain.Bind(conn)
+	writer := s.writerChain.Bind(conn)
 
 	done := false
+	var err error
 	for !done {
 		done, err = machine.Handle(reader, writer)
 		if err != nil {

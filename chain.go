@@ -10,22 +10,12 @@ type Handler interface {
 	Handle(data interface{}) (interface{}, error)
 }
 
-func NewChain() *Chain {
-	return &Chain{
-		first:  nil,
-		last:   nil,
-		reader: nil,
-		writer: nil,
-		conn:   nil,
-	}
-}
-
-type Chain struct {
+type chain struct {
 	first *link
 	last  *link
 }
 
-func (c *Chain) AddHandler(h Handler) {
+func (c *chain) AddHandler(h Handler) {
 	l := newLink(h)
 	if c.first == nil {
 		c.first = l
@@ -36,37 +26,47 @@ func (c *Chain) AddHandler(h Handler) {
 	}
 }
 
-func (c *Chain) GetReaderChain(conn net.Conn) *ReaderChain {
-	return &ReaderChain{
-		chain:  c,
-		reader: bufio.NewReader(conn),
-	}
+func NewReaderChain() *ReaderChain {
+	return new(ReaderChain)
 }
 
-func (c *Chain) GetWriterChain(onn net.Conn) *ReaderChain {
-	return &WriterChain{
-		chain:  c,
-		writer: bufio.NewWriter(conn),
-	}
+func NewWriterChain() *WriterChain {
+	return new(WriterChain)
 }
 
 type ReaderChain struct {
-	chain  *Chain
+	chain
 	reader *bufio.Reader
+	conn   net.Conn
 }
 
 type WriterChain struct {
-	chain  *Chain
-	reader *bufio.Writer
+	chain
+	writer *bufio.Writer
+	conn   net.Conn
+}
+
+func (wc WriterChain) Bind(conn net.Conn) WriterChain {
+	ret := wc
+	ret.writer = bufio.NewWriter(conn)
+	ret.conn = conn
+	return ret
+}
+
+func (rc ReaderChain) Bind(conn net.Conn) ReaderChain {
+	ret := rc
+	ret.reader = bufio.NewReader(conn)
+	ret.conn = conn
+	return ret
 }
 
 func (c ReaderChain) RecvPackage() (data Package, err error) {
-	if c.chain.first == nil {
-		err := errors.New("Chain is empty. Please add Hanlders first.")
+	if c.first == nil {
+		err = errors.New("Chain is empty. Please add Hanlders first.")
 		return
 	}
-	link := c.chain.first
-	data := c.reader
+	link := c.first
+	data = c.reader
 	for {
 		data, err = link.handler.Handle(data)
 		if err != nil {
@@ -81,13 +81,12 @@ func (c ReaderChain) RecvPackage() (data Package, err error) {
 }
 
 func (c WriterChain) SendPackage(data Package) (nn int, err error) {
-	nn, err := 0, nil
-	if c.chain.first == nil {
-		err := errors.New("Chain is empty. Please add Hanlders first.")
+	nn, err = 0, nil
+	if c.first == nil {
+		err = errors.New("Chain is empty. Please add Hanlders first.")
 		return
 	}
-	link := c.chain.first
-	data := data
+	link := c.first
 	for {
 		data, err = link.handler.Handle(data)
 		if err != nil {

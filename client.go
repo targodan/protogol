@@ -7,25 +7,31 @@ import (
 type ErrorHandler func(err error) (abort bool)
 
 type Client struct {
-	chain   Chain
-	machine *StateMachine
+	readerChain ReaderChain
+	writerChain WriterChain
+	machine     *StateMachine
 }
 
-func NewClient(chain Chain, machine *StateMachine) Client {
-	return Server{
-		chain:   chain,
-		machine: machine,
+func NewClient(readerChain ReaderChain, writerChain WriterChain, machine *StateMachine) Client {
+	return Client{
+		readerChain: readerChain,
+		writerChain: writerChain,
+		machine:     machine,
 	}
 }
 
-func (c Client) Start(baseProto string, addr string, errHandler ErrorHandler) (err error) {
+func (c Client) Start(baseProto string, addr string, errHandler ErrorHandler) {
 	conn, err := net.Dial(baseProto, addr)
 	if err != nil {
-		return
+		if errHandler(err) {
+			return
+		}
 	}
 
-	reader := s.chain.GetReaderChain(conn)
-	writer := s.chain.GetWriterChain(conn)
+	machine := CloneStateMachine(*c.machine)
+
+	reader := c.readerChain.Bind(conn)
+	writer := c.writerChain.Bind(conn)
 
 	done := false
 	for !done {

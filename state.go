@@ -1,16 +1,13 @@
 package protoframe
 
-import (
-	"github.com/Workiva/go-datastructures/queue"
-	"net"
-)
+import "github.com/Workiva/go-datastructures/queue"
 
 type State interface {
-	NextState(reader *ReaderChain, writer *WriterChain, stack *queue.Queue) (State, error)
+	NextState(reader ReaderChain, writer WriterChain, stack *queue.Queue) (State, error)
 }
 
 func NewStateMachine(initial State, final State) *StateMachine {
-	return StateMachine{
+	return &StateMachine{
 		initial: initial,
 		current: initial,
 		final:   final,
@@ -19,7 +16,7 @@ func NewStateMachine(initial State, final State) *StateMachine {
 }
 
 func CloneStateMachine(m StateMachine) *StateMachine {
-	return StateMachine{
+	return &StateMachine{
 		initial: m.initial,
 		current: m.current,
 		final:   m.final,
@@ -29,13 +26,13 @@ func CloneStateMachine(m StateMachine) *StateMachine {
 
 type StateMachine struct {
 	initial State
-	currnet State
+	current State
 	final   State
 	stack   *queue.Queue
 }
 
-func (sm *StateMachine) Handle(reader *ReaderChain, writer *WriterChain) (done bool, err error) {
-	sm.current, err = this.initial.NextState(reader, writer, sm.stack)
-	done := sm.current == sm.final
+func (sm *StateMachine) Handle(reader ReaderChain, writer WriterChain) (done bool, err error) {
+	sm.current, err = sm.initial.NextState(reader, writer, sm.stack)
+	done = sm.current == sm.final
 	return
 }
