@@ -1,3 +1,3 @@
-package protoframe
+package protogol
 
 type Package interface{}

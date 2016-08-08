@@ -1,4 +1,4 @@
-package protoframe
+package protogol
 
 import (
 	"bufio"

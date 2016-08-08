@@ -24,3 +24,5 @@ _testmain.go
 *.test
 *.prof
 
+# Debug files from delve when used with go-plus in atom
+debug
