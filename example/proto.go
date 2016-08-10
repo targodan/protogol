@@ -6,8 +6,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
-	"protoframe"
 	"unicode/utf8"
+
+	"github.com/targodan/protogol"
 
 	"github.com/Workiva/go-datastructures/queue"
 )
@@ -56,21 +57,21 @@ func (p packageWriter) Handle(data interface{}) (interface{}, error) {
 	return buf.Bytes(), nil
 }
 
-func NewExReaderChain() *protoframe.ReaderChain {
-	c := protoframe.NewReaderChain()
+func NewExReaderChain() *protogol.ReaderChain {
+	c := protogol.NewReaderChain()
 	c.AddHandler(packageReader{})
 	return c
 }
 
-func NewExWriterChain() *protoframe.WriterChain {
-	c := protoframe.NewWriterChain()
+func NewExWriterChain() *protogol.WriterChain {
+	c := protogol.NewWriterChain()
 	c.AddHandler(packageWriter{})
 	return c
 }
 
 type serverState struct{}
 
-func (s serverState) NextState(reader protoframe.ReaderChain, writer protoframe.WriterChain, stack *queue.Queue) (protoframe.State, error) {
+func (s serverState) NextState(reader protogol.ReaderChain, writer protogol.WriterChain, stack *queue.Queue) (protogol.State, error) {
 	tmp, err := reader.RecvPackage()
 	if err != nil {
 		return nil, err
@@ -87,7 +88,7 @@ type clientState struct {
 	reader *bufio.Reader
 }
 
-func (s clientState) NextState(reader protoframe.ReaderChain, writer protoframe.WriterChain, stack *queue.Queue) (protoframe.State, error) {
+func (s clientState) NextState(reader protogol.ReaderChain, writer protogol.WriterChain, stack *queue.Queue) (protogol.State, error) {
 	msg, err := s.reader.ReadString('\n')
 
 	_, err = writer.SendPackage(msg)
@@ -103,10 +104,10 @@ func (s clientState) NextState(reader protoframe.ReaderChain, writer protoframe.
 	return s, nil
 }
 
-func NewExServerMachine() *protoframe.StateMachine {
-	return protoframe.NewStateMachine(serverState{}, nil)
+func NewExServerMachine() *protogol.StateMachine {
+	return protogol.NewStateMachine(serverState{}, nil)
 }
 
-func NewExClientMachine() *protoframe.StateMachine {
-	return protoframe.NewStateMachine(clientState{bufio.NewReader(os.Stdin)}, nil)
+func NewExClientMachine() *protogol.StateMachine {
+	return protogol.NewStateMachine(clientState{bufio.NewReader(os.Stdin)}, nil)
 }
