@@ -13,12 +13,12 @@ import (
 	"github.com/Workiva/go-datastructures/queue"
 )
 
-func PackageReader(pkg *protogol.Package) (*protogol.Package, error) {
+func PackageReader(pkg protogol.Package) (protogol.Package, error) {
 	reader := pkg.Data.(*bufio.Reader)
 	var len uint32
 	err := binary.Read(reader, binary.LittleEndian, &len)
 	if err != nil {
-		return nil, err
+		return protogol.Package{}, err
 	}
 
 	stringbuf := new(bytes.Buffer)
@@ -26,14 +26,14 @@ func PackageReader(pkg *protogol.Package) (*protogol.Package, error) {
 	for read = 0; read < len; read++ {
 		r, _, err := reader.ReadRune()
 		if err != nil {
-			return nil, err
+			return protogol.Package{}, err
 		}
 		stringbuf.WriteRune(r)
 	}
-	return &protogol.Package{Parent: nil, Data: stringbuf.String()}, nil
+	return protogol.Package{Parent: nil, Data: stringbuf.String()}, nil
 }
 
-func PackageWriter(pkg *protogol.Package) (*protogol.Package, error) {
+func PackageWriter(pkg protogol.Package) (protogol.Package, error) {
 	msg := pkg.Data.(string)
 
 	buf := new(bytes.Buffer)
@@ -41,7 +41,7 @@ func PackageWriter(pkg *protogol.Package) (*protogol.Package, error) {
 	len := uint32(utf8.RuneCountInString(msg))
 	err := binary.Write(buf, binary.LittleEndian, len)
 	if err != nil {
-		return nil, err
+		return protogol.Package{}, err
 	}
 
 	for i := uint32(0); i < len; i++ {
@@ -50,7 +50,7 @@ func PackageWriter(pkg *protogol.Package) (*protogol.Package, error) {
 		buf.WriteRune(r)
 	}
 
-	return &protogol.Package{Parent: nil, Data: buf.Bytes()}, nil
+	return protogol.Package{Parent: nil, Data: buf.Bytes()}, nil
 }
 
 func NewExReaderChain() *protogol.ReaderChain {
@@ -73,7 +73,7 @@ func (s serverState) NextState(reader protogol.ReaderChain, writer protogol.Writ
 		return nil, err
 	}
 	msg := pkg.Data.(string)
-	_, err = writer.SendPackage(&protogol.Package{Parent: nil, Data: msg})
+	_, err = writer.SendPackage(protogol.Package{Parent: nil, Data: msg})
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ type clientState struct {
 func (s clientState) NextState(reader protogol.ReaderChain, writer protogol.WriterChain, stack *queue.Queue) (protogol.State, error) {
 	msg, err := s.reader.ReadString('\n')
 
-	_, err = writer.SendPackage(&protogol.Package{Parent: nil, Data: msg})
+	_, err = writer.SendPackage(protogol.Package{Parent: nil, Data: msg})
 	if err != nil {
 		return nil, err
 	}

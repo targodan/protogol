@@ -11,7 +11,11 @@ type Package struct {
 	Data   interface{}
 }
 
-type Handler func(pkg *Package) (*Package, error)
+type Handler func(pkg Package) (Package, error)
+
+func Unpack(pkg Package) Package {
+	return *pkg.Parent
+}
 
 type chain struct {
 	handlers []Handler
@@ -55,14 +59,14 @@ func (rc ReaderChain) Bind(conn net.Conn) ReaderChain {
 	return ret
 }
 
-func (c ReaderChain) RecvPackage() (pkg *Package, err error) {
+func (c ReaderChain) RecvPackage() (pkg Package, err error) {
 	if len(c.handlers) == 0 {
 		err = errors.New("Chain is empty. Please add Hanlders first.")
 		return
 	}
 	d := c.reader
 	for _, handler := range c.handlers {
-		pkg, err = handler(&Package{nil, d})
+		pkg, err = handler(Package{nil, d})
 		if err != nil {
 			return
 		}
@@ -70,7 +74,7 @@ func (c ReaderChain) RecvPackage() (pkg *Package, err error) {
 	return
 }
 
-func (c WriterChain) SendPackage(pkg *Package) (nn int, err error) {
+func (c WriterChain) SendPackage(pkg Package) (nn int, err error) {
 	nn, err = 0, nil
 	if len(c.handlers) == 0 {
 		err = errors.New("Chain is empty. Please add Hanlders first.")
