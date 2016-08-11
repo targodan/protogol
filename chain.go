@@ -6,32 +6,27 @@ import (
 	"net"
 )
 
-type Handler interface {
-	Handle(data interface{}) (interface{}, error)
+type Package struct {
+	Parent *Package
+	Data   interface{}
 }
 
+type Handler func(pkg *Package) (*Package, error)
+
 type chain struct {
-	first *link
-	last  *link
+	handlers []Handler
 }
 
 func (c *chain) AddHandler(h Handler) {
-	l := newLink(h)
-	if c.first == nil {
-		c.first = l
-		c.last = l
-	} else {
-		c.last.next = l
-		c.last = l
-	}
+	c.handlers = append(c.handlers, h)
 }
 
 func NewReaderChain() *ReaderChain {
-	return new(ReaderChain)
+	return &ReaderChain{chain: chain{make([]Handler, 0, 1)}}
 }
 
 func NewWriterChain() *WriterChain {
-	return new(WriterChain)
+	return &WriterChain{chain: chain{make([]Handler, 0, 1)}}
 }
 
 type ReaderChain struct {
@@ -60,44 +55,34 @@ func (rc ReaderChain) Bind(conn net.Conn) ReaderChain {
 	return ret
 }
 
-func (c ReaderChain) RecvPackage() (data Package, err error) {
-	if c.first == nil {
+func (c ReaderChain) RecvPackage() (pkg *Package, err error) {
+	if len(c.handlers) == 0 {
 		err = errors.New("Chain is empty. Please add Hanlders first.")
 		return
 	}
-	link := c.first
-	data = c.reader
-	for {
-		data, err = link.handler.Handle(data)
+	d := c.reader
+	for _, handler := range c.handlers {
+		pkg, err = handler(&Package{nil, d})
 		if err != nil {
 			return
-		}
-		link = link.next
-		if link == nil {
-			break
 		}
 	}
 	return
 }
 
-func (c WriterChain) SendPackage(data Package) (nn int, err error) {
+func (c WriterChain) SendPackage(pkg *Package) (nn int, err error) {
 	nn, err = 0, nil
-	if c.first == nil {
+	if len(c.handlers) == 0 {
 		err = errors.New("Chain is empty. Please add Hanlders first.")
 		return
 	}
-	link := c.first
-	for {
-		data, err = link.handler.Handle(data)
+	for _, handler := range c.handlers {
+		pkg, err = handler(pkg)
 		if err != nil {
 			return
 		}
-		link = link.next
-		if link == nil {
-			break
-		}
 	}
-	nn, err = c.writer.Write(data.([]byte))
+	nn, err = c.writer.Write(pkg.Data.([]byte))
 	c.writer.Flush()
 	return
 }
