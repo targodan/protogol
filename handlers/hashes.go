@@ -18,11 +18,11 @@ func (err InvalidHashError) Error() string {
 	return "Invalid Hash. \"" + base64.StdEncoding.EncodeToString(err.Expected) + "\" != \"" + base64.StdEncoding.EncodeToString(err.Received) + "\""
 }
 
-func isSameSlice(a []byte, b []byte) bool {
-	return isSameSliceSerial(a, b)
+func isSliceEqual(a []byte, b []byte) bool {
+	return isSliceEqualSerial(a, b)
 }
 
-func isSameSliceSerial(a []byte, b []byte) bool {
+func isSliceEqualSerial(a []byte, b []byte) bool {
 	if a == nil && b == nil {
 		return true
 	}
@@ -43,7 +43,7 @@ func isSameSliceSerial(a []byte, b []byte) bool {
 	return true
 }
 
-func isSameSliceParallel(a []byte, b []byte) bool {
+func isSliceEqualParallel(a []byte, b []byte) bool {
 	if a == nil && b == nil {
 		return true
 	}
@@ -96,7 +96,7 @@ func CheckSha256Sum(pkg protogol.Package) (ret protogol.Package, err error) {
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, pkg.Parent.Data)
 	hash := sha256.Sum256(buf.Bytes())
-	if !isSameSlice(hash[:], pkg.Data.([]byte)) {
+	if !isSliceEqual(hash[:], pkg.Data.([]byte)) {
 		err = InvalidHashError{Expected: hash[:], Received: pkg.Data.([]byte)}
 	}
 

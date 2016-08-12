@@ -20,9 +20,9 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-type futSameSlice func(a []byte, b []byte) bool
+type futSliceEqual func(a []byte, b []byte) bool
 
-func testSameSliceFut(fut futSameSlice, t *testing.T) {
+func testIsSliceEqualFut(fut futSliceEqual, t *testing.T) {
 	Convey("These slices should be equal.", t, func() {
 		{
 			var a []byte
@@ -70,16 +70,16 @@ func testSameSliceFut(fut futSameSlice, t *testing.T) {
 	})
 }
 
-func TestIsSameSlice(t *testing.T) {
-	testSameSliceFut(isSameSlice, t)
+func TestIsSliceEqual(t *testing.T) {
+	testIsSliceEqualFut(isSliceEqual, t)
 }
 
-func TestIsSameSliceSerial(t *testing.T) {
-	testSameSliceFut(isSameSliceSerial, t)
+func TestIsSliceEqualSerial(t *testing.T) {
+	testIsSliceEqualFut(isSliceEqualSerial, t)
 }
 
-func TestIsSameSliceParallel(t *testing.T) {
-	testSameSliceFut(isSameSliceParallel, t)
+func TestIsSliceEqualParallel(t *testing.T) {
+	testIsSliceEqualFut(isSliceEqualParallel, t)
 }
 
 func TestThereAndBackAgainSha256(t *testing.T) {
@@ -91,7 +91,7 @@ func TestThereAndBackAgainSha256(t *testing.T) {
 		tmp, err := AddSha256Sum(protogol.Package{Parent: nil, Data: data})
 		pkg, err := CheckSha256Sum(tmp)
 
-		if err != nil || !isSameSlice(pkg.Data.([]byte), data) {
+		if err != nil || !isSliceEqual(pkg.Data.([]byte), data) {
 			t.Fail()
 		}
 	}
