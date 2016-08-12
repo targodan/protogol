@@ -10,6 +10,8 @@ import (
 	"github.com/targodan/protogol"
 )
 
+const testRandomDataNTimes = 16
+
 func TestMain(m *testing.M) {
 	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
@@ -79,23 +81,15 @@ func TestIsSameSlice(t *testing.T) {
 }
 
 func TestIsSameSliceSerial(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping in short mode.")
-	}
-
 	testSameSliceFit(isSameSliceSerial, t)
 }
 
 func TestIsSameSliceParallel(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping in short mode.")
-	}
-
 	testSameSliceFit(isSameSliceParallel, t)
 }
 
-func TestThereAndBackAgain(t *testing.T) {
-	for i := 0; i < 8; i++ {
+func TestThereAndBackAgainSha256(t *testing.T) {
+	for i := 0; i < testRandomDataNTimes; i++ {
 		data := make([]byte, 4096)
 		for j, _ := range data {
 			data[j] = byte(rand.Int() % 512)
