@@ -16,12 +16,14 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestIsSameSlice(t *testing.T) {
+type fitSameSlice func(a []byte, b []byte) bool
+
+func testSameSliceFit(fit fitSameSlice, t *testing.T) {
 	{
 		var a []byte = nil
 		var b []byte = nil
 
-		if !isSameSlice(a, b) {
+		if !fit(a, b) {
 			t.Fail()
 		}
 	}
@@ -30,7 +32,7 @@ func TestIsSameSlice(t *testing.T) {
 		var a []byte = nil
 		b := []byte{5, 2, 7, 1, 8, 1}
 
-		if isSameSlice(a, b) {
+		if fit(a, b) {
 			t.Fail()
 		}
 	}
@@ -39,7 +41,7 @@ func TestIsSameSlice(t *testing.T) {
 		a := []byte{5, 2}
 		b := []byte{5, 2, 7, 1, 8, 1}
 
-		if isSameSlice(a, b) {
+		if fit(a, b) {
 			t.Fail()
 		}
 	}
@@ -48,7 +50,7 @@ func TestIsSameSlice(t *testing.T) {
 		a := []byte{5, 2, 7, 1, 8, 1}
 		b := []byte{5, 2, 7, 1, 8, 1}
 
-		if !isSameSlice(a, b) {
+		if !fit(a, b) {
 			t.Fail()
 		}
 	}
@@ -57,7 +59,7 @@ func TestIsSameSlice(t *testing.T) {
 		a := []byte{1, 2, 7, 1, 8, 1}
 		b := []byte{5, 2, 7, 1, 8, 1}
 
-		if isSameSlice(a, b) {
+		if fit(a, b) {
 			t.Fail()
 		}
 	}
@@ -66,10 +68,14 @@ func TestIsSameSlice(t *testing.T) {
 		a := []byte{5, 7, 2, 1, 8, 1}
 		b := []byte{5, 2, 7, 1, 8, 1}
 
-		if isSameSlice(a, b) {
+		if fit(a, b) {
 			t.Fail()
 		}
 	}
+}
+
+func TestIsSameSlice(t *testing.T) {
+	testSameSliceFit(isSameSlice, t)
 }
 
 func TestIsSameSliceSerial(t *testing.T) {
@@ -77,115 +83,15 @@ func TestIsSameSliceSerial(t *testing.T) {
 		t.Skip("Skipping in short mode.")
 	}
 
-	{
-		var a []byte = nil
-		var b []byte = nil
-
-		if !isSameSliceSerial(a, b) {
-			t.Fail()
-		}
-	}
-
-	{
-		var a []byte = nil
-		b := []byte{5, 2, 7, 1, 8, 1}
-
-		if isSameSliceSerial(a, b) {
-			t.Fail()
-		}
-	}
-
-	{
-		a := []byte{5, 2}
-		b := []byte{5, 2, 7, 1, 8, 1}
-
-		if isSameSliceSerial(a, b) {
-			t.Fail()
-		}
-	}
-
-	{
-		a := []byte{5, 2, 7, 1, 8, 1}
-		b := []byte{5, 2, 7, 1, 8, 1}
-
-		if !isSameSliceSerial(a, b) {
-			t.Fail()
-		}
-	}
-
-	{
-		a := []byte{1, 2, 7, 1, 8, 1}
-		b := []byte{5, 2, 7, 1, 8, 1}
-
-		if isSameSliceSerial(a, b) {
-			t.Fail()
-		}
-	}
-
-	{
-		a := []byte{5, 7, 2, 1, 8, 1}
-		b := []byte{5, 2, 7, 1, 8, 1}
-
-		if isSameSliceSerial(a, b) {
-			t.Fail()
-		}
-	}
+	testSameSliceFit(isSameSliceSerial, t)
 }
 
 func TestIsSameSliceParallel(t *testing.T) {
-	{
-		var a []byte = nil
-		var b []byte = nil
-
-		if !isSameSliceParallel(a, b) {
-			t.Fail()
-		}
+	if testing.Short() {
+		t.Skip("Skipping in short mode.")
 	}
 
-	{
-		var a []byte = nil
-		b := []byte{5, 2, 7, 1, 8, 1}
-
-		if isSameSliceParallel(a, b) {
-			t.Fail()
-		}
-	}
-
-	{
-		a := []byte{5, 2}
-		b := []byte{5, 2, 7, 1, 8, 1}
-
-		if isSameSliceParallel(a, b) {
-			t.Fail()
-		}
-	}
-
-	{
-		a := []byte{5, 2, 7, 1, 8, 1}
-		b := []byte{5, 2, 7, 1, 8, 1}
-
-		if !isSameSliceParallel(a, b) {
-			t.Fail()
-		}
-	}
-
-	{
-		a := []byte{1, 2, 7, 1, 8, 1}
-		b := []byte{5, 2, 7, 1, 8, 1}
-
-		if isSameSliceParallel(a, b) {
-			t.Fail()
-		}
-	}
-
-	{
-		a := []byte{5, 7, 2, 1, 8, 1}
-		b := []byte{5, 2, 7, 1, 8, 1}
-
-		if isSameSliceParallel(a, b) {
-			t.Fail()
-		}
-	}
+	testSameSliceFit(isSameSliceParallel, t)
 }
 
 func TestThereAndBackAgain(t *testing.T) {

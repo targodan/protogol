@@ -87,11 +87,11 @@ func AddSha256Sum(pkg protogol.Package) (protogol.Package, error) {
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, pkg.Data)
 	hash := sha256.Sum256(buf.Bytes())
-	return protogol.Package{Parent: &pkg, Data: hash[:]}, nil
+	return pkg.Pack(hash[:]), nil
 }
 
 func CheckSha256Sum(pkg protogol.Package) (ret protogol.Package, err error) {
-	ret = protogol.Unpack(pkg)
+	ret = pkg.Unpack()
 
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, pkg.Parent.Data)

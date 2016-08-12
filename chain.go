@@ -11,11 +11,15 @@ type Package struct {
 	Data   interface{}
 }
 
-type Handler func(pkg Package) (Package, error)
-
-func Unpack(pkg Package) Package {
-	return *pkg.Parent
+func (p Package) Pack(data interface{}) Package {
+	return Package{Parent: &p, Data: data}
 }
+
+func (p Package) Unpack() Package {
+	return *p.Parent
+}
+
+type Handler func(pkg Package) (Package, error)
 
 type chain struct {
 	handlers []Handler
