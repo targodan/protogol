@@ -19,6 +19,10 @@ func (p Package) Unpack() Package {
 	return *p.Parent
 }
 
+func NewPackage(data interface{}) Package {
+	return Package{Parent: nil, Data: data}
+}
+
 type Handler func(pkg Package) (Package, error)
 
 type chain struct {
