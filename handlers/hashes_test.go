@@ -23,59 +23,51 @@ func TestMain(m *testing.M) {
 type futSameSlice func(a []byte, b []byte) bool
 
 func testSameSliceFut(fut futSameSlice, t *testing.T) {
-	{
-		var a []byte
-		var b []byte
+	Convey("These slices should be equal.", t, func() {
+		{
+			var a []byte
+			var b []byte
 
-		Convey("Nil slices should be the same.", t, func() {
 			So(fut(a, b), ShouldBeTrue)
-		})
-	}
+		}
 
-	{
-		var a []byte
-		b := []byte{5, 2, 7, 1, 8, 1}
+		{
+			a := []byte{5, 2, 7, 1, 8, 1}
+			b := []byte{5, 2, 7, 1, 8, 1}
 
-		Convey("Nil and a non-nil slice should not be the same.", t, func() {
-			So(fut(a, b), ShouldBeFalse)
-		})
-	}
-
-	{
-		a := []byte{5, 2}
-		b := []byte{5, 2, 7, 1, 8, 1}
-
-		Convey("Slices of different sizes should not be the same.", t, func() {
-			So(fut(a, b), ShouldBeFalse)
-		})
-	}
-
-	{
-		a := []byte{5, 2, 7, 1, 8, 1}
-		b := []byte{5, 2, 7, 1, 8, 1}
-
-		Convey("These slices should be the same.", t, func() {
 			So(fut(a, b), ShouldBeTrue)
-		})
-	}
+		}
+	})
 
-	{
-		a := []byte{1, 2, 7, 1, 8, 1}
-		b := []byte{5, 2, 7, 1, 8, 1}
+	Convey("These slices should not be equal.", t, func() {
+		{
+			var a []byte
+			b := []byte{5, 2, 7, 1, 8, 1}
 
-		Convey("These slices should not be the same.", t, func() {
 			So(fut(a, b), ShouldBeFalse)
-		})
-	}
+		}
 
-	{
-		a := []byte{5, 7, 2, 1, 8, 1}
-		b := []byte{5, 2, 7, 1, 8, 1}
+		{
+			a := []byte{5, 2}
+			b := []byte{5, 2, 7, 1, 8, 1}
 
-		Convey("These slices should not be the same.", t, func() {
 			So(fut(a, b), ShouldBeFalse)
-		})
-	}
+		}
+
+		{
+			a := []byte{1, 2, 7, 1, 8, 1}
+			b := []byte{5, 2, 7, 1, 8, 1}
+
+			So(fut(a, b), ShouldBeFalse)
+		}
+
+		{
+			a := []byte{5, 7, 2, 1, 8, 1}
+			b := []byte{5, 2, 7, 1, 8, 1}
+
+			So(fut(a, b), ShouldBeFalse)
+		}
+	})
 }
 
 func TestIsSameSlice(t *testing.T) {
